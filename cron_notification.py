@@ -1,10 +1,12 @@
 import os
 import time
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import requests
 
-load_dotenv()
+if os.getenv("GITHUB_ACTIONS") != "true":
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_CHAT_ID = os.getenv("BOT_CHAT_ID")
