@@ -1,0 +1,43 @@
+name: Flight Price Notification
+
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-flight-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run flight price notification
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        BOT_CHAT_ID: ${{ secrets.BOT_CHAT_ID }}
+        API_ENDPOINT: ${{ secrets.API_ENDPOINT }}
+        API_OFFER_LINK: ${{ secrets.API_OFFER_LINK }}
+      run: |
+        echo "Starting flight price check..."
+        python cron_notification.py
+        echo "Flight price check completed!"
