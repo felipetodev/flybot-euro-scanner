@@ -49,14 +49,10 @@ def send_telegram_message(chat_id: str, message: str) -> None:
     masked_chat_id = f"***{str(chat_id)[-3:]}" if chat_id else "***"
 
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        sent_message: Message = loop.run_until_complete(
+        sent_message: Message = asyncio.run(
             bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
         )
 
-        loop.close()
         print(f"Message ID: {sent_message.message_id} sent to {masked_chat_id}")
 
     except Exception as e:
