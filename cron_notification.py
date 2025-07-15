@@ -1,7 +1,9 @@
 import os
 import time
 from datetime import datetime, timedelta
+import asyncio
 import requests
+from telegram import Bot, Message
 
 if os.getenv("GITHUB_ACTIONS") != "true":
     from dotenv import load_dotenv
@@ -40,19 +42,25 @@ top_destinations = [
 ]
 
 
-def send_telegram_message(chat_id, message):
+def send_telegram_message(chat_id: str, message: str) -> None:
     """Send a message to a specific chat ID."""
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+    bot = Bot(token=BOT_TOKEN)
+
+    masked_chat_id = f"***{str(chat_id)[-3:]}" if chat_id else "***"
 
     try:
-        response = requests.post(url, json=data, timeout=10)
-        if response.status_code == 200:
-            print(f"Message sent to {chat_id}")
-        else:
-            print(f"Failed to send message to {chat_id}: {response.status_code}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        sent_message: Message = loop.run_until_complete(
+            bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+        )
+
+        loop.close()
+        print(f"Message ID: {sent_message.message_id} sent to {masked_chat_id}")
+
     except Exception as e:
-        print(f"Error sending message to {chat_id}: {e}")
+        print(f"Error sending message to {masked_chat_id}: {e}")
 
 
 def check_flight_prices():
@@ -197,7 +205,7 @@ def main():
             start_date_str = start_date.strftime("%Y-%m-%d")
             end_date_str = end_date_range.strftime("%Y-%m-%d")
 
-            message += f"✈️ *{deal['destination']}* ({deal['code']})\n"
+            message += f"✈️ *Ruta:* {deal['destination']} → ({deal['code']})\n"
             message += f"📅 *Mes:* {deal['month_name']} {deal['year']}\n"
             message += f"📆 *Fecha:* {deal['date']}\n"
             message += f"💰 *Precio:* ${deal['price']} USD\n"
